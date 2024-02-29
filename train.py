@@ -9,7 +9,7 @@ import pickle
 import json
 from enn import enn, enrml, lamuda
 from net import netLSTM_withbn
-from data import TextDataset
+from data import WelllogDataset
 from configuration import config
 from util import Record, save_var, get_file_list, list_to_csv, shrink, save_txt
 
@@ -25,14 +25,14 @@ torch.cuda.set_device(config.deviceID)
 # set the work path
 PATH = config.path
 if not os.path.exists(PATH):
-    os.mkdir(PATH)
+    os.makedirs(PATH)
 # Parameters used in the net
 ERROR_PER = config.ERROR_PER
 NE = config.ne  # number of ensemble
 GAMMA = config.GAMMA
 T = config.T
 # Load data and initialize enn net
-text = TextDataset()
+text = WelllogDataset(input_dim=config.input_dim, output_dim=config.output_dim)
 # Set the loss function
 criterion = torch.nn.MSELoss()
 INFO = {
@@ -173,6 +173,11 @@ def draw_result(enn_net):
 
 
 def test(enn_net, feature_name='', draw_result=False):
+    # 确保result目录存在
+    result_dir = 'result'
+    if not os.path.exists(result_dir):
+        os.makedirs(result_dir)
+    
     # Get the latest parameters, and initialize the enn net
     param_list = get_file_list('{}_params'.format(feature_name), config.path)
     params = pickle.load(open(param_list[-1], 'rb'))
@@ -215,9 +220,9 @@ def test(enn_net, feature_name='', draw_result=False):
             plt.savefig('{}/result_{}.png'.format(PATH, feature_name))
             #plt.show()
 
-
-def test1(enn_net, feature            lamuda_tmp = lamuda_history.get_latest(mean=False) / GAMMA
-_name='', draw_result=False):
+def test1(enn_net, feature_name='', draw_result=False):
+    lamuda_tmp = lamuda_history.get_latest(mean=False) / GAMMA
+    
     # Get the latest parameters, and initialize the enn net
     param_list = get_file_list('{}_params'.format(feature_name), config.path)
     params = pickle.load(open(param_list[-1], 'rb'))
@@ -273,7 +278,7 @@ def run():
             current_feature_name = config.columns[config.input_dim]
             textLoader = DataLoader(text, batch_size=config.batch_size, shuffle=True,
                                     num_workers=config.num_workers, drop_last=config.drop_last)
-            model = netLSTM_withbn()
+            model = netLSTM_withbn(config)
             with torch.no_grad():
                 model = model.cuda()
             net_enn_train = enn.ENN(model, NE)
@@ -313,8 +318,8 @@ def run():
                 filename = PATH+"/parameters_{}_epoch_{}".format(current_feature_name, epoch)
                 save_var(params, filename)
                 del params
-            #test(net_enn_train, feature_name=current_feature_name, draw_result=(epoch == config.epoch-1))
-            test1(net_enn_train, feature_name=current_feature_name, draw_result=True)
+            test(net_enn_train, feature_name=current_feature_name, draw_result=(epoch == config.epoch-1))
+            # test1(net_enn_train, feature_name=current_feature_name, draw_result=True)
             config.input_dim += config.output_dim
             text.reset_train_dataset()
         config.input_dim -= config.output_dim
