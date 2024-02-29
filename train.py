@@ -9,7 +9,7 @@ import pickle
 import json
 from enn import enn, enrml, lamuda
 from net import netLSTM_withbn
-from data import WelllogDataset
+from data import WelllogDataset, TextDataset
 from configuration import config
 from util import Record, save_var, get_file_list, list_to_csv, shrink, save_txt
 
@@ -32,7 +32,7 @@ NE = config.ne  # number of ensemble
 GAMMA = config.GAMMA
 T = config.T
 # Load data and initialize enn net
-text = WelllogDataset(input_dim=config.input_dim, output_dim=config.output_dim)
+text = TextDataset()
 # Set the loss function
 criterion = torch.nn.MSELoss()
 INFO = {
@@ -220,8 +220,7 @@ def test(enn_net, feature_name='', draw_result=False):
             plt.savefig('{}/result_{}.png'.format(PATH, feature_name))
             #plt.show()
 
-def test1(enn_net, feature_name='', draw_result=False):
-    lamuda_tmp = lamuda_history.get_latest(mean=False) / GAMMA
+def test1(enn_net, feature_name='', draw_result=False): 
     
     # Get the latest parameters, and initialize the enn net
     param_list = get_file_list('{}_params'.format(feature_name), config.path)

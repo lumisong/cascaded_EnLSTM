@@ -26,7 +26,7 @@ class DefaultConfiguration:
         self.hid_dim = 4
         self.num_layer = 1
         self.drop_out = 0.1
-        self.output_dim = 3 # cascaded EnLSTM
+        self.output_dim = 1
         # 训练设置
         self.ne = 100
         self.T = 1
